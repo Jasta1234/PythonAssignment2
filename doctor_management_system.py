@@ -101,6 +101,9 @@ class MainWindow(QMainWindow):
         self.lineEditYoe = self.findChild(QLineEdit, 'lineEditYoe')
         self.btnEditDoctor = self.findChild(QPushButton, 'btnEditDoctor')
         self.btnDeleteDoctor = self.findChild(QPushButton, 'btnDeleteDoctor')
+        self.lblModifyDoctor = self.findChild(QLabel, 'lblModifyDoctor')
+        self.btnDeleteDoctor.clicked.connect(self.btnDeleteDoctorClickedHandler)
+        self.btnEditDoctor.clicked.connect(self.btnUpdateDoctorClickHandler)
 
         colNames, rows = getDoctorIdsAndNames()
         print(colNames, rows)
@@ -108,8 +111,53 @@ class MainWindow(QMainWindow):
             self.cboDoctor.addItem(row[1], userData=row[0])
         self.cboDoctor.currentIndexChanged.connect(self.cboDoctorCurrentIndexChangedHandler)
 
-    def btnDeleteDoctor(self):
-        pass
+        self.refreshDoctorComboBox()
+
+    def btnDeleteDoctorClickedHandler(self):
+        try:
+            fname = self.lineEditFName.text()
+            lname = self.lineEditLName.text()
+
+            msg = QMessageBox(self)
+            msg.setWindowTitle("Delete Confirmation")
+            msg.setText(f"Are you sure you want to delete {fname} {lname}")
+            msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            msg.setIcon(QMessageBox.Icon.Question)
+            button = msg.exec()
+            if button == QMessageBox.StandardButton.Yes:
+                did = self.cboDoctor.currentData()
+                result = deleteDoctorById(did)
+                if result == 1:
+                    self.lblModifyDoctor.setText('Success')
+                    self.refreshUpdateDoctorTab()
+                else:
+                    self.lblModifyDoctor.setText('Failure')
+            elif button == QMessageBox.StandardButton.No:
+                self.lblModifyDoctor.setText('Delete Cancelled')
+        except Exception as e:
+            self.lblModifyDoctor.setText(e)
+
+        self.refreshDoctorComboBox()
+
+    def btnUpdateDoctorClickHandler(self):
+        did = self.cboDoctor.currentData()
+        fname = self.lineEditFName.text()
+        lname = self.lineEditLName.text()
+        email = self.lineEditEmail_2.text()
+        gend = self.cboGender_2.currentText()
+        pnumber = self.lineEditPNumber.text()
+        age = self.lineEditAge_2.text()
+        addr = self.lineEditAddr.text()
+        spec = self.lineEditSpec.text()
+        yoe = self.lineEditYoe.text()
+        result = updateDoctor(did, fname, lname, gend, pnumber, email, age, addr, spec, yoe)
+        index = self.cboDocId.currentIndex()
+        if result == 1:
+            self.lblModifyDoctor.setText('Success')
+        else:
+            self.lblModifyDoctor.setText('Failure')
+        self.refreshUpdateDoctorTab()
+        self.cboDocId.setCurrentIndex(index)
 
     def cboDoctorCurrentIndexChangedHandler(self):
         self.refreshDoctorComboBox()
@@ -119,18 +167,32 @@ class MainWindow(QMainWindow):
             docId = self.cboDoctor.currentData()
             info = getDoctorInfoById(docId)
             print("info", info)
-            self.cboDocId.setText(str(info['did']))
+            self.cboDocId.addItem(str(info['did']))
             self.lineEditFName.setText(info['fname'])
             self.lineEditLName.setText(info['lname'])
             self.lineEditPNumber.setText(info['pnumber'])
             self.lineEditEmail_2.setText(info['email'])
-            self.cboGender_2.setText(str(info['gender']))
-            self.lineEditAge_2.setText(info['age'])
+            self.cboGender_2.addItem(info['gender'])
+            self.cboGender_2.addItem('Male')
+            self.cboGender_2.addItem('Female')
+            self.cboGender_2.addItem('Other')
+            self.lineEditAge_2.setText(str(info['age']))
             self.lineEditAddr.setText(info['address'])
             self.lineEditSpec.setText(info['spec'])
-            self.lineEditYoe.setText(info['yoe'])
+            self.lineEditYoe.setText(str(info['yoe']))
         except Exception as e:
             print(e)
+
+    def refreshUpdateDoctorTab(self):
+        colNames, rows = getDoctorIdsAndNames()
+        print(colNames, rows)
+        self.cboDoctor.clear()
+        self.cboGender.clear()
+        self.cboDocId.clear()
+
+        for row in rows:
+            self.cboDoctor.addItem(row[1], userData=row[0])
+        self.cboDoctor.currentIndexChanged.connect(self.cboDoctorCurrentIndexChangedHandler)
 
     def btnAddDoctorClickHandler(self):
         try:
