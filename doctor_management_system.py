@@ -69,7 +69,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('home-ui.ui', self)
+
         self.initializeAddDoctorWidgets()
+        self.initializeEditDeleteDoctorWidgets()
 
     def initializeAddDoctorWidgets(self):
         self.lineEditFirstName = self.findChild(QLineEdit, 'lineEditFirstName')
@@ -85,38 +87,84 @@ class MainWindow(QMainWindow):
         self.lblDoctorFeedback = self.findChild(QLabel, 'lblDoctorFeedback')
         self.btnAddDoctor.clicked.connect(self.btnAddDoctorClickHandler)
 
+    def initializeEditDeleteDoctorWidgets(self):
+        self.cboDoctor = self.findChild(QComboBox, 'cboDoctor')
+        self.cboDocId = self.findChild(QComboBox, 'cboDocId')
+        self.lineEditFName = self.findChild(QLineEdit, 'lineEditFName')
+        self.lineEditLName = self.findChild(QLineEdit, 'lineEditLName')
+        self.lineEditPNumber = self.findChild(QLineEdit, 'lineEditPNumber')
+        self.lineEditEmail_2 = self.findChild(QLineEdit, 'lineEditEmail_2')
+        self.cboGender_2 = self.findChild(QComboBox, 'cboGender_2')
+        self.lineEditAge_2 = self.findChild(QLineEdit, 'lineEditAge_2')
+        self.lineEditAddr = self.findChild(QLineEdit, 'lineEditAddr')
+        self.lineEditSpec = self.findChild(QLineEdit, 'lineEditSpec')
+        self.lineEditYoe = self.findChild(QLineEdit, 'lineEditYoe')
+        self.btnEditDoctor = self.findChild(QPushButton, 'btnEditDoctor')
+        self.btnDeleteDoctor = self.findChild(QPushButton, 'btnDeleteDoctor')
+
+        colNames, rows = getDoctorIdsAndNames()
+        print(colNames, rows)
+        for row in rows:
+            self.cboDoctor.addItem(row[1], userData=row[0])
+        self.cboDoctor.currentIndexChanged.connect(self.cboDoctorCurrentIndexChangedHandler)
+
+    def btnDeleteDoctor(self):
+        pass
+
+    def cboDoctorCurrentIndexChangedHandler(self):
+        self.refreshDoctorComboBox()
+
+    def refreshDoctorComboBox(self):
+        try:
+            docId = self.cboDoctor.currentData()
+            info = getDoctorInfoById(docId)
+            print("info", info)
+            self.cboDocId.setText(str(info['did']))
+            self.lineEditFName.setText(info['fname'])
+            self.lineEditLName.setText(info['lname'])
+            self.lineEditPNumber.setText(info['pnumber'])
+            self.lineEditEmail_2.setText(info['email'])
+            self.cboGender_2.setText(str(info['gender']))
+            self.lineEditAge_2.setText(info['age'])
+            self.lineEditAddr.setText(info['address'])
+            self.lineEditSpec.setText(info['spec'])
+            self.lineEditYoe.setText(info['yoe'])
+        except Exception as e:
+            print(e)
+
     def btnAddDoctorClickHandler(self):
         try:
             fname = self.lineEditFirstName.text()
-            assert fname != '', 'First name is mandatory'
+            assert fname != '', 'First name is mandatory.'
             lname = self.lineEditLastName.text()
-            assert lname != '', 'Last name is mandatory'
+            assert lname != '', 'Last name is mandatory.'
             pnumber = self.lineEditPhoneNumber.text()
+            assert pnumber != '', 'Phone number is mandatory.'
             email = self.lineEditEmail.text()
-            assert email != '', 'Email is mandatory'
+            assert email != '', 'Email is mandatory.'
             age = self.lineEditAge.text()
-            assert age != '', 'Age is mandatory'
-            assert age != int, 'Age has to be an integer.'
-            specilization = self.lineEditSpecilization.text()
-            assert specilization != '', 'Specilization is mandatory'
-            gender = self.cboGender.currentData()
-            assert gender != 'Select', 'Please select a gender...'
-            assert gender != '', 'Gender is mandatory'
-            address = self.lineEditAddress.text()
-            assert address != '', 'Address is mandatory'
-            yearsofexperience = self.lineEditYearsOfExperience.text()
-            assert yearsofexperience != int, 'Years of experience has to be an integer.'
-            assert yearsofexperience != '', 'years of experience is mandatory'
-            result = add_doctor(fname, lname, gender, pnumber, email, int(age), address, specilization,
-                                int(yearsofexperience))
+            assert age != '', 'Age is mandatory.'
+            spec = self.lineEditSpecilization.text()
+            assert spec != '', 'Specilization is mandatory.'
+            addr = self.lineEditAddress.text()
+            assert addr != '', 'Address is mandatory.'
+            yoe = self.lineEditYearsOfExperience.text()
+            assert yoe != '', 'Years of experience is mandatory.'
+            gend = self.cboGender.currentText()
+            assert gend != 'Select', 'Please select a gender.'
+
+            result = add_doctor(fname, lname, gend, pnumber, email, age, addr, spec, yoe)
+
         except Exception as e:
             self.lblDoctorFeedback.setText(str(e))
-            print(e)
+
         else:
             if result == 1:
-                self.lblDoctorFeedback.setText("Doctor added")
+                self.lblDoctorFeedback.setText("Student Added")
             else:
-                self.lblDoctorFeedback.setText("Error adding doctor")
+                self.lblDoctorFeedback.setText("Student could not be added")
+
+
 
 
 if __name__ == '__main__':
