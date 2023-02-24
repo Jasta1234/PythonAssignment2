@@ -76,6 +76,14 @@ def getAllDoctors():
     sql = "SELECT * FROM `doctors_management_system`.`doctors`;"
     return executeQueryAndReturnResult(sql)
 
+def addPatient(fname, lname, gend, pnumber, email, age, addr):
+    sql = f"INSERT INTO `doctors_management_system`.`patients`(`first_name`, `last_name`, `gender`, `phone_number`, `email`, `age`, `address`) VALUES('{fname}', '{lname}', '{gend}', '{pnumber}', '{email}', {age}, '{addr}');"
+    return executeQueryAndCommit(sql)
+
+def getAllPatients():
+    sql = "SELECT * FROM `doctors_management_system`.`patients`;"
+    return executeQueryAndReturnResult(sql)
+
 
 class Person:
     """
@@ -154,6 +162,23 @@ class MainWindow(QMainWindow):
         self.initializeAddDoctorWidgets()
         self.initializeEditDeleteDoctorWidgets()
         self.initializeAllDoctorTbl()
+        self.initializeAddPatientWidgets()
+        self.initializeAllPatientTbl()
+
+    def initializeAddPatientWidgets(self):
+        """
+        Code to initialize the add doctor widgets
+        """
+        self.lineEditFirstName_2 = self.findChild(QLineEdit, 'lineEditFirstName_2')
+        self.lineEditLastName_2 = self.findChild(QLineEdit, 'lineEditLastName_2')
+        self.lineEditPhoneNumber_2 = self.findChild(QLineEdit, 'lineEditPhoneNumber_2')
+        self.lineEditEmail_3 = self.findChild(QLineEdit, 'lineEditEmail_3')
+        self.lineEditAge_3 = self.findChild(QLineEdit, 'lineEditAge_3')
+        self.lineEditAddress_2 = self.findChild(QLineEdit, 'lineEditAddress_2')
+        self.cboGender_3 = self.findChild(QComboBox, 'cboGender_3')
+        self.btnAddPatient_2 = self.findChild(QPushButton, 'btnAddPatient_2')
+        self.lblPatientFeedback = self.findChild(QLabel, 'lblPatientFeedback')
+        self.btnAddPatient_2.clicked.connect(self.btnAddPatientClickHandler)
 
     def initializeAddDoctorWidgets(self):
         """
@@ -179,6 +204,14 @@ class MainWindow(QMainWindow):
         self.tblAllDoctors = self.findChild(QTableWidget, 'tblAllDoctors')
         colNames, data = getAllDoctors()
         self.displayTableData(colNames, data, self.tblAllDoctors)
+
+    def initializeAllPatientTbl(self):
+        """
+        Code to initialize the table that contains all patients
+        """
+        self.tblAllPatients = self.findChild(QTableWidget, 'tblAllPatients')
+        colNames, data = getAllPatients()
+        self.displayPatientInTable(colNames, data, self.tblAllPatients)
 
     def refreshAllTabs(self):
         """
@@ -340,11 +373,11 @@ class MainWindow(QMainWindow):
 
         else:
             if result == 1:
-                self.lblDoctorFeedback.setText("Student Added")
+                self.lblDoctorFeedback.setText("Doctor Added")
                 self.refreshAllTabs()
                 self.refreshDoctorComboBox()
             else:
-                self.lblDoctorFeedback.setText("Student could not be added")
+                self.lblDoctorFeedback.setText("Doctor could not be added")
 
     def displayTableData(self, columns, rows, table: QTableWidget):
         """
@@ -366,6 +399,60 @@ class MainWindow(QMainWindow):
         """
         colNames, data = getAllDoctors()
         self.displayTableData(colNames, data, self.tblAllDoctors)
+
+    def displayPatientInTable(self, columns, rows, table: QTableWidget):
+        """
+        Code to display all the data of patients in a table
+        """
+        table.setRowCount(len(rows))
+        table.setColumnCount(len(columns))
+        for i in range(len(rows)):
+            row = rows[i]
+            for j in range(len(row)):
+                table.setItem(i, j, QTableWidgetItem(str(row[j])))
+        for i in range(table.columnCount()):
+            table.setHorizontalHeaderItem(i, QTableWidgetItem(f'{columns[i]}'))
+
+    def refreshAllPatientTbl(self):
+        """
+        Code to refresh the patients table
+        """
+        columns = ["Patient ID", "First name", "Last name", "Gender", "Phone Number", "Email", "Age", "Address"]
+        data = getAllPatients()
+        self.displayPatientInTable(columns, data, self.tblAllPatients)
+
+    def btnAddPatientClickHandler(self):
+        """
+        Button add patient click handler
+        """
+        try:
+            fname = self.lineEditFirstName_2.text()
+            assert fname != '', 'First name is mandatory.'
+            lname = self.lineEditLastName_2.text()
+            assert lname != '', 'Last name is mandatory.'
+            pnumber = self.lineEditPhoneNumber_2.text()
+            assert pnumber != '', 'Phone number is mandatory.'
+            email = self.lineEditEmail_3.text()
+            assert email != '', 'Email is mandatory.'
+            age = self.lineEditAge_3.text()
+            assert age != '', 'Age is mandatory.'
+            addr = self.lineEditAddress_2.text()
+            assert addr != '', 'Address is mandatory.'
+            gend = self.cboGender_3.currentText()
+            assert gend != 'Select', 'Please select a gender.'
+
+            result = addPatient(fname, lname, gend, pnumber, email, age, addr)
+
+        except Exception as e:
+            self.lblPatientFeedback.setText(str(e))
+
+        else:
+            if result == 1:
+                self.lblPatientFeedback.setText("Patient Added")
+            else:
+                self.lblPatientFeedback.setText("Patient could not be added")
+
+
 
 
 
