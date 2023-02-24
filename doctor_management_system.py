@@ -1,94 +1,13 @@
 import sys
 from PyQt6 import uic
 from PyQt6.QtWidgets import *
-import mysql.connector
-
-
-def executeQueryAndReturnResult(query, host='localhost', username='root', password='root', port=3306,
-                                database='doctors_management_system'):
-    """
-    :returns the results of an SQL query
-    """
-    with mysql.connector.connect(host=host, user=username, password=password, port=port, database=database) as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(query)
-            return cursor.column_names, cursor.fetchall()
-
-
-def executeQueryAndCommit(query, host='localhost', username='root', password='root', port=3306,
-                          database='doctors_management_system'):
-    """
-    executes and commits an SQL query
-    """
-    with mysql.connector.connect(host=host, user=username, password=password, port=port, database=database) as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(query)
-            conn.commit()
-            return cursor.rowcount
-
-
-
-
-#Controller Code
-def add_doctor(fname, lname, gend, pnumber, email, age, addr, spec, yoe):
-    """
-    SQL code to add a doctor
-    """
-    sql = f"INSERT INTO `doctors_management_system`.`doctors`(`first_name`, `last_name`, `gender`, `phone_number`, `email`, `age`, `address`, `specilization`, `years_of_experience`) VALUES('{fname}', '{lname}', '{gend}', '{pnumber}', '{email}', {age}, '{addr}', '{spec}', {yoe});"
-    return executeQueryAndCommit(sql)
-
-def getDoctorInfoById(docId):
-    """
-    SQL code to get the information of a doctor given a doctor ID
-    """
-    sql = f"SELECT * FROM doctors_management_system.doctors where doctor_id = {docId}; "
-    docInfo = executeQueryAndReturnResult(sql)[1][0]
-    print('stuinfo',docInfo)
-    data = {'did': docInfo[0], 'fname': docInfo[1], 'lname': docInfo[2], 'gender': docInfo[3], 'pnumber': docInfo[4], 'email': docInfo[5], 'age': docInfo[6], 'address': docInfo[7], 'spec': docInfo[8], 'yoe': docInfo[9]}
-    print(data)
-    return data
-
-def getDoctorIdsAndNames():
-    """
-    SQL code to get doctor ID's and names
-    """
-    sql =f"SELECT doctor_id, concat(first_name, ' ', last_name) as 'Doctor Name' FROM doctors_management_system.doctors;"
-    return executeQueryAndReturnResult(sql)
-
-def deleteDoctorById(did):
-    """
-    SQL code delete a doctor by ID
-    """
-    sql = f"DELETE FROM `doctors_management_system`.`doctors` WHERE (`doctor_id` = '{did}');"
-    return executeQueryAndCommit(sql)
-
-def updateDoctor(did, fname, lname, gend, pnumber, email, age, addr, spec, yoe):
-    """
-    SQL code to update a doctor
-    """
-    sql = f"UPDATE `doctors_management_system`.`doctors` SET `first_name` = '{fname}', `last_name` = '{lname}', `gender` = '{gend}', `phone_number` = '{pnumber}', `email` = '{email}', `age` = '{age}', `address` = '{addr}', `specilization` = '{spec}', `years_of_experience` = '{yoe}' WHERE (`doctor_id` = {did});"
-    return executeQueryAndCommit(sql)
-
-def getAllDoctors():
-    """
-    SQL code to get all doctors
-    """
-    sql = "SELECT * FROM `doctors_management_system`.`doctors`;"
-    return executeQueryAndReturnResult(sql)
-
-def addPatient(fname, lname, gend, pnumber, email, age, addr):
-    sql = f"INSERT INTO `doctors_management_system`.`patients`(`first_name`, `last_name`, `gender`, `phone_number`, `email`, `age`, `address`) VALUES('{fname}', '{lname}', '{gend}', '{pnumber}', '{email}', {age}, '{addr}');"
-    return executeQueryAndCommit(sql)
-
-def getAllPatients():
-    sql = "SELECT * FROM `doctors_management_system`.`patients`;"
-    return executeQueryAndReturnResult(sql)
-
+from controller import *
 
 class Person:
     """
     Class of a person
     """
+
     def __init__(self, first_name, last_name, phone_number, email, age, gender, address):
         self.__first_name = first_name
         self.__last_name = last_name
@@ -131,6 +50,7 @@ class Doctor(Person):
     """
     Class of a doctor
     """
+
     def __init__(self, first_name, last_name, phone_number, email, age, gender, address, specialization,
                  years_of_experience, doctor_id):
         self.__specialization = specialization
@@ -155,6 +75,7 @@ class MainWindow(QMainWindow):
     """
     MainWindow class for the PyQt6 program
     """
+
     def __init__(self):
         super().__init__()
         uic.loadUi('home-ui.ui', self)
@@ -164,6 +85,7 @@ class MainWindow(QMainWindow):
         self.initializeAllDoctorTbl()
         self.initializeAddPatientWidgets()
         self.initializeAllPatientTbl()
+        self.initializeEditDeletePatientWidgets()
 
     def initializeAddPatientWidgets(self):
         """
@@ -249,6 +171,61 @@ class MainWindow(QMainWindow):
 
         self.refreshDoctorComboBox()
 
+    def initializeEditDeletePatientWidgets(self):
+        """
+        Code to initialize the edit/delete doctor widgets
+        """
+        self.cboPatient = self.findChild(QComboBox, 'cboPatient')
+        self.lineEditPatientId = self.findChild(QLineEdit, 'lineEditPatientId')
+        self.lineEditFName_2 = self.findChild(QLineEdit, 'lineEditFName_2')
+        self.lineEditLName_2 = self.findChild(QLineEdit, 'lineEditLName_2')
+        self.lineEditPNumber_2 = self.findChild(QLineEdit, 'lineEditPNumber_2')
+        self.lineEditEmail_4 = self.findChild(QLineEdit, 'lineEditEmail_4')
+        self.cboGender_4 = self.findChild(QComboBox, 'cboGender_4')
+        self.lineEditAge_4 = self.findChild(QLineEdit, 'lineEditAge_4')
+        self.lineEditAddr_2 = self.findChild(QLineEdit, 'lineEditAddr_2')
+        self.btnEditPatient = self.findChild(QPushButton, 'btnEditPatient')
+        self.btnDeletePatient = self.findChild(QPushButton, 'btnDeletePatient')
+        self.lblModifyPatient = self.findChild(QLabel, 'lblModifyPatient')
+        self.btnDeletePatient.clicked.connect(self.btnDeletePatientClickedHandler)
+        self.btnEditPatient.clicked.connect(self.btnUpdatePatientClickHandler)
+
+        colNames, rows = getPatientIdsAndNames()
+        print(colNames, rows)
+        for row in rows:
+            self.cboPatient.addItem(row[1], userData=row[0])
+        self.cboPatient.currentIndexChanged.connect(self.cboPatientCurrentIndexChangedHandler)
+
+        self.refreshPatientComboBox()
+
+    def btnDeletePatientClickedHandler(self):
+        """
+        Button delete clicked handler
+        """
+        try:
+            fname = self.lineEditFName_2.text()
+            lname = self.lineEditLName_2.text()
+
+            msg = QMessageBox(self)
+            msg.setWindowTitle("Delete Confirmation")
+            msg.setText(f"Are you sure you want to delete {fname} {lname}")
+            msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            msg.setIcon(QMessageBox.Icon.Question)
+            button = msg.exec()
+            if button == QMessageBox.StandardButton.Yes:
+                pid = self.cboPatient.currentData()
+                result = deletePatientById(pid)
+                if result == 1:
+                    self.lblModifyPatient.setText('Success')
+                    self.refreshAllPatientTabs()
+                else:
+                    self.lblModifyPatient.setText('Failure')
+            elif button == QMessageBox.StandardButton.No:
+                self.lblModifyPatient.setText('Delete Cancelled')
+        except Exception as e:
+            self.lblModifyPatient.setText(e)
+
+
     def btnDeleteDoctorClickedHandler(self):
         """
         Button delete clicked handler
@@ -276,7 +253,7 @@ class MainWindow(QMainWindow):
         except Exception as e:
             self.lblModifyDoctor.setText(e)
 
-        self.refreshDoctorComboBox()
+
 
     def btnUpdateDoctorClickHandler(self):
         """
@@ -293,13 +270,34 @@ class MainWindow(QMainWindow):
         spec = self.lineEditSpec.text()
         yoe = self.lineEditYoe.text()
         result = updateDoctor(did, fname, lname, gend, pnumber, email, age, addr, spec, yoe)
-        index = self.cboDocId.currentIndex()
+        index = self.cboDoctor.currentIndex()
         if result == 1:
             self.lblModifyDoctor.setText('Success')
+            self.refreshAllTabs()
+            self.cboDoctor.setCurrentIndex(index)
         else:
             self.lblModifyDoctor.setText('Failure')
-        self.refreshAllTabs()
-        self.cboDocId.setCurrentIndex(index)
+
+    def btnUpdatePatientClickHandler(self):
+        """
+        Button update clicked handler
+        """
+        pid = self.cboPatient.currentData()
+        fname = self.lineEditFName_2.text()
+        lname = self.lineEditLName_2.text()
+        pnumber = self.lineEditPNumber_2.text()
+        email = self.lineEditEmail_4.text()
+        gend = self.cboGender_4.currentText()
+        age = self.lineEditAge_4.text()
+        addr = self.lineEditAddr_2.text()
+        result = updatePatient(pid, fname, lname, gend, pnumber, email, age, addr)
+        index = self.cboPatient.currentIndex()
+        if result == 1:
+            self.lblModifyPatient.setText('Success')
+            self.refreshAllPatientTabs()
+            self.cboPatient.setCurrentIndex(index)
+        else:
+            self.lblModifyPatient.setText('Failure')
 
     def cboDoctorCurrentIndexChangedHandler(self):
         """
@@ -328,6 +326,25 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(e)
 
+    def refreshPatientComboBox(self):
+        """
+        Code to refresh the doctor combo box
+        """
+        try:
+            patId = self.cboPatient.currentData()
+            info = getPatientInfoById(patId)
+            print("info", info)
+            self.lineEditPatientId.setText(str(info['pid']))
+            self.lineEditFName_2.setText(info['fname'])
+            self.lineEditLName_2.setText(info['lname'])
+            self.lineEditPNumber_2.setText(info['pnumber'])
+            self.lineEditEmail_4.setText(info['email'])
+            self.cboGender_4.setCurrentText(info['gender'])
+            self.lineEditAge_4.setText(str(info['age']))
+            self.lineEditAddr_2.setText(info['address'])
+        except Exception as e:
+            print(e)
+
     def refreshUpdateDoctorTab(self):
         """
         Code to refresh the update doctor tab
@@ -335,12 +352,32 @@ class MainWindow(QMainWindow):
         colNames, rows = getDoctorIdsAndNames()
         print(colNames, rows)
         self.cboDoctor.clear()
-        self.cboGender.clear()
-        self.cboDocId.clear()
 
         for row in rows:
             self.cboDoctor.addItem(row[1], userData=row[0])
         self.cboDoctor.currentIndexChanged.connect(self.cboDoctorCurrentIndexChangedHandler)
+
+    def refreshAllPatientTabs(self):
+        """
+        Code to refresh all tables/tabs
+        """
+        self.refreshAllPatientTbl()
+        self.refreshUpdatePatientTab()
+
+    def refreshUpdatePatientTab(self):
+        """
+        Code to refresh the update patient tab
+        """
+        colNames, rows = getPatientIdsAndNames()
+        print(colNames, rows)
+        self.cboPatient.clear()
+
+        for row in rows:
+            self.cboPatient.addItem(row[1], userData=row[0])
+        self.cboPatient.currentIndexChanged.connect(self.cboPatientCurrentIndexChangedHandler)
+
+    def cboPatientCurrentIndexChangedHandler(self):
+        self.refreshPatientComboBox()
 
     def btnAddDoctorClickHandler(self):
         """
@@ -376,6 +413,16 @@ class MainWindow(QMainWindow):
                 self.lblDoctorFeedback.setText("Doctor Added")
                 self.refreshAllTabs()
                 self.refreshDoctorComboBox()
+                self.lineEditFirstName.clear()
+                self.lineEditLastName.clear()
+                self.lineEditPhoneNumber.clear()
+                self.lineEditEmail.clear()
+                self.lineEditAge.clear()
+                self.lineEditSpecilization.clear()
+                self.lineEditAddress.clear()
+                self.lineEditYearsOfExperience.clear()
+                self.cboGender.setCurrentText('Select')
+
             else:
                 self.lblDoctorFeedback.setText("Doctor could not be added")
 
@@ -389,7 +436,8 @@ class MainWindow(QMainWindow):
             row = rows[i]
             for j in range(len(row)):  # once for each cell in a given row
                 table.setItem(i, j, QTableWidgetItem(str(row[j])))
-        columns = ['Doctor ID', 'First name', 'Last name', 'Gender', 'Phone number', 'Email', 'Age', 'Address', 'Specilization', 'Years of experience']
+        columns = ['Doctor ID', 'First name', 'Last name', 'Gender', 'Phone number', 'Email', 'Age', 'Address',
+                   'Specilization', 'Years of experience']
         for i in range(table.columnCount()):
             table.setHorizontalHeaderItem(i, QTableWidgetItem(f'{columns[i]}'))
 
@@ -410,6 +458,7 @@ class MainWindow(QMainWindow):
             row = rows[i]
             for j in range(len(row)):
                 table.setItem(i, j, QTableWidgetItem(str(row[j])))
+        columns = ["Patient ID", "First name", "Last name", "Gender", "Phone Number", "Email", "Age", "Address"]
         for i in range(table.columnCount()):
             table.setHorizontalHeaderItem(i, QTableWidgetItem(f'{columns[i]}'))
 
@@ -417,9 +466,8 @@ class MainWindow(QMainWindow):
         """
         Code to refresh the patients table
         """
-        columns = ["Patient ID", "First name", "Last name", "Gender", "Phone Number", "Email", "Age", "Address"]
-        data = getAllPatients()
-        self.displayPatientInTable(columns, data, self.tblAllPatients)
+        colNames, data = getAllPatients()
+        self.displayPatientInTable(colNames, data, self.tblAllPatients)
 
     def btnAddPatientClickHandler(self):
         """
@@ -449,12 +497,17 @@ class MainWindow(QMainWindow):
         else:
             if result == 1:
                 self.lblPatientFeedback.setText("Patient Added")
+                self.refreshAllPatientTabs()
+                self.refreshPatientComboBox()
+                self.lineEditFirstName_2.clear()
+                self.lineEditLastName_2.clear()
+                self.lineEditPhoneNumber_2.clear()
+                self.lineEditEmail_3.clear()
+                self.lineEditAge_3.clear()
+                self.lineEditAddress_2.clear()
+                self.cboGender_3.clear()
             else:
                 self.lblPatientFeedback.setText("Patient could not be added")
-
-
-
-
 
 
 if __name__ == '__main__':
