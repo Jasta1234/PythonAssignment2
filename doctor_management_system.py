@@ -1,11 +1,86 @@
 import sys
-
 from PyQt6 import uic
 from PyQt6.QtWidgets import *
-from controller import *
+import mysql.connector
+
+
+def executeQueryAndReturnResult(query, host='localhost', username='root', password='root', port=3306,
+                                database='doctors_management_system'):
+    """
+    :returns the results of an SQL query
+    """
+    with mysql.connector.connect(host=host, user=username, password=password, port=port, database=database) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(query)
+            return cursor.column_names, cursor.fetchall()
+
+
+def executeQueryAndCommit(query, host='localhost', username='root', password='root', port=3306,
+                          database='doctors_management_system'):
+    """
+    executes and commits an SQL query
+    """
+    with mysql.connector.connect(host=host, user=username, password=password, port=port, database=database) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(query)
+            conn.commit()
+            return cursor.rowcount
+
+
+
+
+#Controller Code
+def add_doctor(fname, lname, gend, pnumber, email, age, addr, spec, yoe):
+    """
+    SQL code to add a doctor
+    """
+    sql = f"INSERT INTO `doctors_management_system`.`doctors`(`first_name`, `last_name`, `gender`, `phone_number`, `email`, `age`, `address`, `specilization`, `years_of_experience`) VALUES('{fname}', '{lname}', '{gend}', '{pnumber}', '{email}', {age}, '{addr}', '{spec}', {yoe});"
+    return executeQueryAndCommit(sql)
+
+def getDoctorInfoById(docId):
+    """
+    SQL code to get the information of a doctor given a doctor ID
+    """
+    sql = f"SELECT * FROM doctors_management_system.doctors where doctor_id = {docId}; "
+    docInfo = executeQueryAndReturnResult(sql)[1][0]
+    print('stuinfo',docInfo)
+    data = {'did': docInfo[0], 'fname': docInfo[1], 'lname': docInfo[2], 'gender': docInfo[3], 'pnumber': docInfo[4], 'email': docInfo[5], 'age': docInfo[6], 'address': docInfo[7], 'spec': docInfo[8], 'yoe': docInfo[9]}
+    print(data)
+    return data
+
+def getDoctorIdsAndNames():
+    """
+    SQL code to get doctor ID's and names
+    """
+    sql =f"SELECT doctor_id, concat(first_name, ' ', last_name) as 'Doctor Name' FROM doctors_management_system.doctors;"
+    return executeQueryAndReturnResult(sql)
+
+def deleteDoctorById(did):
+    """
+    SQL code delete a doctor by ID
+    """
+    sql = f"DELETE FROM `doctors_management_system`.`doctors` WHERE (`doctor_id` = '{did}');"
+    return executeQueryAndCommit(sql)
+
+def updateDoctor(did, fname, lname, gend, pnumber, email, age, addr, spec, yoe):
+    """
+    SQL code to update a doctor
+    """
+    sql = f"UPDATE `doctors_management_system`.`doctors` SET `first_name` = '{fname}', `last_name` = '{lname}', `gender` = '{gend}', `phone_number` = '{pnumber}', `email` = '{email}', `age` = '{age}', `address` = '{addr}', `specilization` = '{spec}', `years_of_experience` = '{yoe}' WHERE (`doctor_id` = {did});"
+    return executeQueryAndCommit(sql)
+
+def getAllDoctors():
+    """
+    SQL code to get all doctors
+    """
+    sql = "SELECT * FROM `doctors_management_system`.`doctors`;"
+    return executeQueryAndReturnResult(sql)
 
 
 class Person:
+    """
+    Class of a person
+    """
     def __init__(self, first_name, last_name, phone_number, email, age, gender, address):
         self.__first_name = first_name
         self.__last_name = last_name
@@ -45,6 +120,9 @@ class Person:
 
 
 class Doctor(Person):
+    """
+    Class of a doctor
+    """
     def __init__(self, first_name, last_name, phone_number, email, age, gender, address, specialization,
                  years_of_experience, doctor_id):
         self.__specialization = specialization
@@ -66,14 +144,21 @@ class Doctor(Person):
 
 
 class MainWindow(QMainWindow):
+    """
+    MainWindow class for the PyQt6 program
+    """
     def __init__(self):
         super().__init__()
         uic.loadUi('home-ui.ui', self)
 
         self.initializeAddDoctorWidgets()
         self.initializeEditDeleteDoctorWidgets()
+        self.initializeAllDoctorTbl()
 
     def initializeAddDoctorWidgets(self):
+        """
+        Code to initialize the add doctor widgets
+        """
         self.lineEditFirstName = self.findChild(QLineEdit, 'lineEditFirstName')
         self.lineEditLastName = self.findChild(QLineEdit, 'lineEditLastName')
         self.lineEditPhoneNumber = self.findChild(QLineEdit, 'lineEditPhoneNumber')
@@ -87,9 +172,27 @@ class MainWindow(QMainWindow):
         self.lblDoctorFeedback = self.findChild(QLabel, 'lblDoctorFeedback')
         self.btnAddDoctor.clicked.connect(self.btnAddDoctorClickHandler)
 
+    def initializeAllDoctorTbl(self):
+        """
+        Code to initialize the table that contains all doctors
+        """
+        self.tblAllDoctors = self.findChild(QTableWidget, 'tblAllDoctors')
+        colNames, data = getAllDoctors()
+        self.displayTableData(colNames, data, self.tblAllDoctors)
+
+    def refreshAllTabs(self):
+        """
+        Code to refresh all tables/tabs
+        """
+        self.refreshAllDoctorTbl()
+        self.refreshUpdateDoctorTab()
+
     def initializeEditDeleteDoctorWidgets(self):
+        """
+        Code to initialize the edit/delete doctor widgets
+        """
         self.cboDoctor = self.findChild(QComboBox, 'cboDoctor')
-        self.cboDocId = self.findChild(QComboBox, 'cboDocId')
+        self.lineEditDocId = self.findChild(QLineEdit, 'lineEditDocId')
         self.lineEditFName = self.findChild(QLineEdit, 'lineEditFName')
         self.lineEditLName = self.findChild(QLineEdit, 'lineEditLName')
         self.lineEditPNumber = self.findChild(QLineEdit, 'lineEditPNumber')
@@ -114,6 +217,9 @@ class MainWindow(QMainWindow):
         self.refreshDoctorComboBox()
 
     def btnDeleteDoctorClickedHandler(self):
+        """
+        Button delete clicked handler
+        """
         try:
             fname = self.lineEditFName.text()
             lname = self.lineEditLName.text()
@@ -129,7 +235,7 @@ class MainWindow(QMainWindow):
                 result = deleteDoctorById(did)
                 if result == 1:
                     self.lblModifyDoctor.setText('Success')
-                    self.refreshUpdateDoctorTab()
+                    self.refreshAllTabs()
                 else:
                     self.lblModifyDoctor.setText('Failure')
             elif button == QMessageBox.StandardButton.No:
@@ -140,6 +246,9 @@ class MainWindow(QMainWindow):
         self.refreshDoctorComboBox()
 
     def btnUpdateDoctorClickHandler(self):
+        """
+        Button update clicked handler
+        """
         did = self.cboDoctor.currentData()
         fname = self.lineEditFName.text()
         lname = self.lineEditLName.text()
@@ -156,26 +265,29 @@ class MainWindow(QMainWindow):
             self.lblModifyDoctor.setText('Success')
         else:
             self.lblModifyDoctor.setText('Failure')
-        self.refreshUpdateDoctorTab()
+        self.refreshAllTabs()
         self.cboDocId.setCurrentIndex(index)
 
     def cboDoctorCurrentIndexChangedHandler(self):
+        """
+        Refreshes the Doctor combo box if the index is changed
+        """
         self.refreshDoctorComboBox()
 
     def refreshDoctorComboBox(self):
+        """
+        Code to refresh the doctor combo box
+        """
         try:
             docId = self.cboDoctor.currentData()
             info = getDoctorInfoById(docId)
             print("info", info)
-            self.cboDocId.addItem(str(info['did']))
+            self.lineEditDocId.setText(str(info['did']))
             self.lineEditFName.setText(info['fname'])
             self.lineEditLName.setText(info['lname'])
             self.lineEditPNumber.setText(info['pnumber'])
             self.lineEditEmail_2.setText(info['email'])
-            self.cboGender_2.addItem(info['gender'])
-            self.cboGender_2.addItem('Male')
-            self.cboGender_2.addItem('Female')
-            self.cboGender_2.addItem('Other')
+            self.cboGender_2.setCurrentText(info['gender'])
             self.lineEditAge_2.setText(str(info['age']))
             self.lineEditAddr.setText(info['address'])
             self.lineEditSpec.setText(info['spec'])
@@ -184,6 +296,9 @@ class MainWindow(QMainWindow):
             print(e)
 
     def refreshUpdateDoctorTab(self):
+        """
+        Code to refresh the update doctor tab
+        """
         colNames, rows = getDoctorIdsAndNames()
         print(colNames, rows)
         self.cboDoctor.clear()
@@ -195,6 +310,9 @@ class MainWindow(QMainWindow):
         self.cboDoctor.currentIndexChanged.connect(self.cboDoctorCurrentIndexChangedHandler)
 
     def btnAddDoctorClickHandler(self):
+        """
+        Button add doctor click handler
+        """
         try:
             fname = self.lineEditFirstName.text()
             assert fname != '', 'First name is mandatory.'
@@ -223,8 +341,31 @@ class MainWindow(QMainWindow):
         else:
             if result == 1:
                 self.lblDoctorFeedback.setText("Student Added")
+                self.refreshAllTabs()
+                self.refreshDoctorComboBox()
             else:
                 self.lblDoctorFeedback.setText("Student could not be added")
+
+    def displayTableData(self, columns, rows, table: QTableWidget):
+        """
+        Code to display all the data of doctors in a table
+        """
+        table.setRowCount(len(rows))
+        table.setColumnCount(len(columns))
+        for i in range(len(rows)):  # once for each row
+            row = rows[i]
+            for j in range(len(row)):  # once for each cell in a given row
+                table.setItem(i, j, QTableWidgetItem(str(row[j])))
+        columns = ['Doctor ID', 'First name', 'Last name', 'Gender', 'Phone number', 'Email', 'Age', 'Address', 'Specilization', 'Years of experience']
+        for i in range(table.columnCount()):
+            table.setHorizontalHeaderItem(i, QTableWidgetItem(f'{columns[i]}'))
+
+    def refreshAllDoctorTbl(self):
+        """
+        Code to refresh the doctors table
+        """
+        colNames, data = getAllDoctors()
+        self.displayTableData(colNames, data, self.tblAllDoctors)
 
 
 

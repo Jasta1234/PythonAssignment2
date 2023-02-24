@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1284</width>
+    <height>1037</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,12 +19,12 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>791</width>
-      <height>571</height>
+      <width>1281</width>
+      <height>1021</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -296,6 +296,19 @@
        </property>
       </widget>
      </widget>
+     <widget class="QTableWidget" name="tblAllDoctors">
+      <property name="geometry">
+       <rect>
+        <x>500</x>
+        <y>20</y>
+        <width>721</width>
+        <height>701</height>
+       </rect>
+      </property>
+      <attribute name="verticalHeaderVisible">
+       <bool>false</bool>
+      </attribute>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_2">
      <attribute name="title">
@@ -335,13 +348,28 @@
          <height>22</height>
         </rect>
        </property>
+       <item>
+        <property name="text">
+         <string>Male</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Female</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Other</string>
+        </property>
+       </item>
       </widget>
       <widget class="QLabel" name="label_10">
        <property name="geometry">
         <rect>
-         <x>50</x>
+         <x>40</x>
          <y>30</y>
-         <width>41</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -391,9 +419,9 @@
       <widget class="QLabel" name="label_14">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>0</x>
          <y>190</y>
-         <width>81</width>
+         <width>91</width>
          <height>20</height>
         </rect>
        </property>
@@ -484,25 +512,12 @@
         <rect>
          <x>100</x>
          <y>460</y>
-         <width>75</width>
+         <width>91</width>
          <height>23</height>
         </rect>
        </property>
        <property name="text">
         <string>Delete Doctor</string>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="cboDocId">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>70</y>
-         <width>261</width>
-         <height>22</height>
-        </rect>
        </property>
       </widget>
       <widget class="QLineEdit" name="lineEditFName">
@@ -596,6 +611,32 @@
        </property>
        <property name="text">
         <string>Address:</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lblModifyDoctor">
+       <property name="geometry">
+        <rect>
+         <x>190</x>
+         <y>460</y>
+         <width>151</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEditDocId">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>90</x>
+         <y>70</y>
+         <width>261</width>
+         <height>20</height>
+        </rect>
        </property>
       </widget>
      </widget>
